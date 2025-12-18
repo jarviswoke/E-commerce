@@ -1,7 +1,10 @@
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 const { generateToken } = require("../Config/jwtToken");
 const User = require("../Models/userModel");
 const asyncHandler = require("express-async-handler");
+const validateMongodbId = require("../utlis/validateMongodbid");
+const { generateRefreshToken } = require("../Config/refreshToken");
 
 // create user
 const createUser = asyncHandler(async (req, res) => {
@@ -26,6 +29,21 @@ const loginUserCtrl = asyncHandler(async (req, res) => {
     //check if user exist
     const findUser = await User.findOne({ email }).select("+password");
     if(findUser && await findUser.isPasswordMatched(password)) {
+        const refreshToken = await generateRefreshToken(findUser._id);
+        // save refreshtoken in db
+        await User.findByIdAndUpdate(
+            findUser.id,
+            { refreshToken },
+            {  new: true }
+        );
+        // set refresh token in cookie
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: false,      
+            sameSite: "lax",
+            maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
+        });
+
         res.json({
             _id: findUser?._id,
             firstname: findUser?.firstname,
@@ -40,14 +58,42 @@ const loginUserCtrl = asyncHandler(async (req, res) => {
     }
 });
 
+// handle refresh token 
+const handleRefreshToken = asyncHandler(async (req, res) => {
+    const cookies = req.cookies;
+    if (!cookies?.refreshToken) {
+        return res.status(401).json({ message: "No Refresh Token in Cookies" });
+    }
+    const refreshToken = cookies.refreshToken;
+
+    // find user with this refresh token
+    const user = await User.findOne({ refreshToken });
+    if (!user) {
+        return res.status(403).json({ message: "Refresh token not found" });
+    }
+
+    // verify refresh token
+    jwt.verify(refreshToken, process.env.JWT_SECRET, (err, decoded) => {
+        if (err || user._id.toString() !== decoded.id) {
+            return res.status(403).json({ message: "Invalid refresh token" });
+        }
+
+        // generate NEW access token
+        const accessToken = generateToken(user._id);
+        res.status(200).json({ accessToken });
+    });
+});
+
+
 // Update user
 const updateUser = asyncHandler(async (req, res) => {
+    console.log();
     const { id } = req.params;
-    // Validate MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        res.status(400);
-        throw new Error("Invalid user ID");
-    }
+    const { _id, role } = req.user;
+
+    validateMongodbId(_id);
+    validateMongodbId(id);
+
     // authorization check
     if (req.user.role !== "admin" && req.user._id.toString() !== id) {
         res.status(403);
@@ -86,11 +132,9 @@ const getallUser = asyncHandler(async (req, res) => {
 // Get a single user
 const getaUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
+
     //validate MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        res.status(400);
-        throw new Error("Invalid user ID");
-    }
+    validateMongodbId(id);
     const user = await User.findById(id);
     if (!user) {
         res.status(404);
@@ -102,11 +146,10 @@ const getaUser = asyncHandler(async (req, res) => {
 // Delete a user
 const deleteUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
+
     // Validate MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        res.status(400);
-        throw new Error("Invalid user ID");
-    }
+    validateMongodbId(id);
+
     const user = await User.findByIdAndDelete(id);
     if (!user) {
         res.status(404);
@@ -121,6 +164,8 @@ const deleteUser = asyncHandler(async (req, res) => {
 // block user
 const blockUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    validateMongodbId(id);
+
     const user = await User.findByIdAndUpdate(
         id,
         { isBlocked: true },
@@ -139,6 +184,8 @@ const blockUser = asyncHandler(async (req, res) => {
 //unblock user
 const unblockUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    validateMongodbId(id);
+
     const user = await User.findByIdAndUpdate(
         id,
         { isBlocked: false },
@@ -154,4 +201,6 @@ const unblockUser = asyncHandler(async (req, res) => {
     });
 });
 
-module.exports = { createUser, loginUserCtrl, updateUser, getallUser, getaUser, deleteUser, blockUser, unblockUser };
+
+
+module.exports = { createUser, loginUserCtrl, updateUser, getallUser, getaUser, deleteUser, blockUser, unblockUser, handleRefreshToken };

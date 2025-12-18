@@ -6,11 +6,13 @@ const dbConnect = require("./Models/dbConnect");
 const authRouter = require("./Routes/authRoute");
 const bodyParser = require("body-parser");
 const { notFound, errorHandler } = require("./Middlewares/errorHandler");
+const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = process.env.PORT || 5050;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 // Middlewares
 app.use(express.json());
