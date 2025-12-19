@@ -84,6 +84,29 @@ const handleRefreshToken = asyncHandler(async (req, res) => {
     });
 });
 
+// logout functionality
+const logout = asyncHandler(async (req, res) => {
+  const cookies = req.cookies;
+  if (!cookies?.refreshToken) {
+    return res.sendStatus(204); 
+  }
+  const refreshToken = cookies.refreshToken;
+  const user = await User.findOne({ refreshToken });
+
+  // Clear cookie anyway
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+  if (!user) {
+    return res.sendStatus(204);
+  }
+  user.refreshToken = "";
+  await user.save();
+  return res.status(200).json({ message: "Logged out successfully" });
+});
+
 
 // Update user
 const updateUser = asyncHandler(async (req, res) => {
@@ -203,4 +226,4 @@ const unblockUser = asyncHandler(async (req, res) => {
 
 
 
-module.exports = { createUser, loginUserCtrl, updateUser, getallUser, getaUser, deleteUser, blockUser, unblockUser, handleRefreshToken };
+module.exports = { createUser, loginUserCtrl, updateUser, getallUser, getaUser, deleteUser, blockUser, unblockUser, handleRefreshToken, logout };
