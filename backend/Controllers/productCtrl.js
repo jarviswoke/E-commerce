@@ -69,20 +69,64 @@ const getProduct = asyncHandler(async (req, res) => {
 
 // get all products
 const getAllProducts = asyncHandler(async (req, res) => {
-    const products = await Product.find();
+  try {
+    // FILTERING
+    const queryObj = { ...req.query };
+    const excludeFields = ["page", "sort", "limit", "fields"];
+    excludeFields.forEach(el => delete queryObj[el]);
 
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
+    let query = Product.find(JSON.parse(queryStr));
+
+    // SORTING
+    if (req.query.sort) {
+      const sortBy = req.query.sort.split(",").join(" ");
+      query = query.sort(sortBy);
+    } else {
+      query = query.sort("-createdAt");
+    }
+
+    // FIELD LIMITING
+    if (req.query.fields) {
+      const fields = req.query.fields.split(",").join(" ");
+      query = query.select(fields);
+    } else {
+      query = query.select("-__v");
+    }
+
+    // PAGINATION
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Page validation (WITH FILTER)
+    if (req.query.page) {
+      const productCount = await Product.countDocuments(
+        JSON.parse(queryStr)
+      );
+      if (skip >= productCount) {
+        res.status(404);
+        throw new Error("This page does not exist");
+      }
+    }
+
+    query = query.skip(skip).limit(limit);
+    const products = await query;
     res.status(200).json({
-        success: true,
-        message: "All products assembled. Avengers, roll out 🦾",
-        products,
-        count: products.length,
+      success: true,
+      count: products.length,
+      page,
+      products,
     });
+  } catch (error) {
+    throw new Error(error);
+  }
 });
 
 // delete product
 const deleteProduct = asyncHandler(async (req, res) => {
     const { id } = req.params;
-
     try {
         const deletedProduct = await Product.findByIdAndDelete(id);
 
