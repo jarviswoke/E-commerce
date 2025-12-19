@@ -13,12 +13,13 @@ const createUser = asyncHandler(async (req, res) => {
     const findUser = await User.findOne({ email });
     if (findUser) {
         res.status(409);
-        throw new Error("User already exists");
+        throw new Error("This hero already exists in the Avengers database..");
     }
     // Create new user
     const newUser = await User.create(req.body);
     res.status(201).json({
         success: true,
+        message: "Welcome to the Avengers Initiative..",
         data: newUser,
     });
 });
@@ -45,6 +46,7 @@ const loginUserCtrl = asyncHandler(async (req, res) => {
         });
 
         res.json({
+            message: "Access granted. Suit up, Avenger!!",
             _id: findUser?._id,
             firstname: findUser?.firstname,
             lastname: findUser?.lastname,
@@ -54,7 +56,7 @@ const loginUserCtrl = asyncHandler(async (req, res) => {
         });
     } else {
         res.status(401);
-        throw new Error('Invlalid Credentials...');
+        throw new Error('Access denied. Even Tony Stark needs the right credentials...');
     }
 });
 
@@ -62,25 +64,28 @@ const loginUserCtrl = asyncHandler(async (req, res) => {
 const handleRefreshToken = asyncHandler(async (req, res) => {
     const cookies = req.cookies;
     if (!cookies?.refreshToken) {
-        return res.status(401).json({ message: "No Refresh Token in Cookies" });
+        return res.status(401).json({ message: "No Time Stone found. Refresh token missing(cookies)" });
     }
     const refreshToken = cookies.refreshToken;
 
     // find user with this refresh token
     const user = await User.findOne({ refreshToken });
     if (!user) {
-        return res.status(403).json({ message: "Refresh token not found" });
+        return res.status(403).json({ message: "Nick Fury doesnt recognize this token.." });
     }
 
     // verify refresh token
     jwt.verify(refreshToken, process.env.JWT_SECRET, (err, decoded) => {
         if (err || user._id.toString() !== decoded.id) {
-            return res.status(403).json({ message: "Invalid refresh token" });
+            return res.status(403).json({ message: " Thanos snapped this refresh token out of existence." });
         }
 
         // generate NEW access token
         const accessToken = generateToken(user._id);
-        res.status(200).json({ accessToken });
+        res.status(200).json({
+            message: "Time reset successful. New access token forged..",
+            accessToken,
+        });
     });
 });
 
@@ -104,7 +109,9 @@ const logout = asyncHandler(async (req, res) => {
   }
   user.refreshToken = "";
   await user.save();
-  return res.status(200).json({ message: "Logged out successfully" });
+  return res.status(200).json({ 
+    message: "Youve exited the Avengers Tower safely.." 
+    });
 });
 
 
@@ -120,7 +127,7 @@ const updateUser = asyncHandler(async (req, res) => {
     // authorization check
     if (req.user.role !== "admin" && req.user._id.toString() !== id) {
         res.status(403);
-        throw new Error("You can update only your own profile");
+        throw new Error(" You cant edit another Avengers suit..");
     }
     const updatedUser = await User.findByIdAndUpdate(
         id,
@@ -137,9 +144,12 @@ const updateUser = asyncHandler(async (req, res) => {
     );
     if (!updatedUser) {
         res.status(404);
-        throw new Error("User not found...");
+        throw new Error(" SHIELD couldnt locate this Avenger..");
     }
-    res.status(200).json(updatedUser);
+    res.status(200).json({
+        message: "Profile upgraded. Stark would be proud..",
+        updatedUser,
+    });
 });
 
 //Get all users
@@ -161,7 +171,7 @@ const getaUser = asyncHandler(async (req, res) => {
     const user = await User.findById(id);
     if (!user) {
         res.status(404);
-        throw new Error("User not found");
+        throw new Error("This Avenger is off the grid..");
     }
     res.status(200).json(user);
 });
@@ -176,10 +186,10 @@ const deleteUser = asyncHandler(async (req, res) => {
     const user = await User.findByIdAndDelete(id);
     if (!user) {
         res.status(404);
-        throw new Error("User not found");
+        throw new Error("Target not found in the multiverse..");
     }
     res.status(200).json({
-        message: "User deleted successfully",
+        message: "Avenger removed from the multiverse..",
         deletedUser: user,
     });
 });
@@ -196,10 +206,10 @@ const blockUser = asyncHandler(async (req, res) => {
     );
     if (!user) {
         res.status(404);
-        throw new Error("User not found!!");
+        throw new Error("SHIELD failed to detain this Avenger!!");
     }
     res.json({
-        message: "User blocked successfully...",
+        message: "This Avenger has been detained by SHIELD...",
         user,
     });
 });
@@ -216,14 +226,13 @@ const unblockUser = asyncHandler(async (req, res) => {
     );
     if (!user) {
         res.status(404);
-        throw new Error("User not found");
+        throw new Error(" This Avenger cannot be found for release..");
     }
     res.json({
-        message: "User unblocked successfully",
+        message: " This Avenger cannot be found for release..",
         user,
     });
 });
-
 
 
 module.exports = { createUser, loginUserCtrl, updateUser, getallUser, getaUser, deleteUser, blockUser, unblockUser, handleRefreshToken, logout };
