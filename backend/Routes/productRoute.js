@@ -10,7 +10,6 @@ const { authMiddleware, isAdmin } = require('../Middlewares/authMiddleware');
 const router = express.Router();
 
 router.post("/", authMiddleware, isAdmin, createProduct);
-
 router.get("/", getAllProducts);
 router.get("/:id", getProduct);
 

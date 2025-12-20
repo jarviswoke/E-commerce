@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const crypto = require("crypto");
 const { Schema } = mongoose;
 
 const userSchema = new Schema(
@@ -55,19 +56,38 @@ const userSchema = new Schema(
     ],
     address: [{ type: Schema.Types.ObjectId, ref: "Address" }],
     wishlist: [{ type: Schema.Types.ObjectId, ref: "Product" }],
-},
-{
-    timestamps: true,
-});
+    refreshToken: {
+        type: String,
+    },
+    passwordChangeAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
+    },
+    {
+        timestamps: true,
+    }
+);
 
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return;
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
+    next();
 });
 
 userSchema.methods.isPasswordMatched = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    this.passwordResetToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest("hex");
+    this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 mins
+    return resetToken;
 };
 
 module.exports = mongoose.model('User', userSchema);

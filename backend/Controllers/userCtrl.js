@@ -1,11 +1,11 @@
-const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const { generateToken } = require("../Config/jwtToken");
 const User = require("../Models/userModel");
 const asyncHandler = require("express-async-handler");
 const validateMongodbId = require("../utlis/validateMongodbid");
 const { generateRefreshToken } = require("../Config/refreshToken");
-
+const sendEmail = require("./emailCtrl");
+const crypto = require("crypto");
 // create user
 const createUser = asyncHandler(async (req, res) => {
     const { email } = req.body;
@@ -234,5 +234,102 @@ const unblockUser = asyncHandler(async (req, res) => {
     });
 });
 
+// update password
+const updatePassword = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    const { password } = req.body;
+    validateMongodbId(_id);
+    const user = await User.findById(_id);
+    if (!user) {
+        throw new Error("🛑 Identity not found in the multiverse");
+    }
+    if (!password) {
+        throw new Error("⚠️ You can't suit up without a password");
+    }
+    user.password = password;
+    await user.save();
+    res.status(200).json({
+        status: "SUCCESS",
+        title: "🦸‍♂️ Operation Password Upgrade",
+        message: "New suit deployed successfully. Welcome to your next phase.",
+    });
+});
 
-module.exports = { createUser, loginUserCtrl, updateUser, getallUser, getaUser, deleteUser, blockUser, unblockUser, handleRefreshToken, logout };
+// forgot password token
+const forgotPasswordToken = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+        throw new Error("User not found with this email");
+    }
+    try {
+        const token = await user.createPasswordResetToken();
+        // Save token & expiry in DB
+        await user.save({ validateBeforeSave: false });
+
+        // Email reset link
+        const resetURL = `<p>Hi,</p><p>Follow this link to reset your password.</p>
+            <p>This link is valid for <b>10 minutes</b>.</p>
+            <a href="http://localhost:3000/reset-password/${token}">Click Here to Reset Password</a>`;
+        const data = {
+            to: email,
+            subject: "Forgot Password Link",
+            text: "Reset your password",
+            html: resetURL,
+        };
+        await sendEmail(data);
+        res.json({
+            message: "Password reset link sent to your email",
+        });
+    } catch (error) {
+        throw new Error(error.message);
+    }
+});
+
+// reset  password
+const resetPassword = asyncHandler(async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+    if (!password) {
+        throw new Error("Password is required");
+    }
+    const hashedToken = crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+    // Find user with valid token
+    const user = await User.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+        throw new Error("Reset token is invalid or expired");
+    }
+    user.password = password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+    res.status(200).json({
+        status: "SUCCESS",
+        message: "Password reset successful. You can now login 🦸‍♂️",
+    });
+});
+
+
+module.exports = { 
+    createUser, 
+    loginUserCtrl,
+    updateUser,
+    getallUser, 
+    getaUser, 
+    deleteUser,
+    blockUser, 
+    unblockUser, 
+    handleRefreshToken, 
+    logout, 
+    updatePassword,
+    forgotPasswordToken, 
+    resetPassword,
+};
