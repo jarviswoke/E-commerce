@@ -5,6 +5,7 @@ const cors = require("cors");
 const dbConnect = require("./Models/dbConnect");
 const authRouter = require("./Routes/authRoute");
 const productRouter = require("./Routes/productRoute");
+const blogRouter = require("./Routes/blogRoute");
 const bodyParser = require("body-parser");
 const { notFound, errorHandler } = require("./Middlewares/errorHandler");
 const cookieParser = require("cookie-parser");
@@ -23,6 +24,7 @@ app.use(cors());
 
 app.use("/api/user", authRouter);
 app.use("/api/product", productRouter);
+app.use("/api/blog", blogRouter);
 
 app.use(notFound);
 app.use(errorHandler);
