@@ -31,7 +31,7 @@ var blogSchema = new mongoose.Schema({
         ref: "User",
        },
     ],
-    likes: [
+    dislikes: [
        {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
