@@ -6,6 +6,7 @@ const validateMongodbId = require("../utils/validateMongodbid");
 const { generateRefreshToken } = require("../Config/refreshToken");
 const sendEmail = require("./emailCtrl");
 const crypto = require("crypto");
+
 // create user
 const createUser = asyncHandler(async (req, res) => {
     const { email } = req.body;

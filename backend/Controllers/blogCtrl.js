@@ -49,16 +49,15 @@ const getAllBlogs = asyncHandler(async (req, res) => {
     res.json(blogs);
 });
 
-// like blog (NO :id in URL)
+// like blog 
 const likeBlog = asyncHandler(async (req, res) => {
   const { blogId } = req.body;
 
-  // validation
   if (!blogId) {
     res.status(400);
     throw new Error("blogId is required in request body");
   }
-  // validateMongodbId(blogId);
+  validateMongodbId(blogId);
   const loginUserId = req.user._id;
   const blog = await Blog.findById(blogId);
   if (!blog) {
@@ -113,5 +112,68 @@ const likeBlog = asyncHandler(async (req, res) => {
   res.json(updatedBlog);
 });
 
+// dislike blog (NO :id in URL)
+const dislikeBlog = asyncHandler(async (req, res) => {
+  const { blogId } = req.body;
+  if (!blogId) {
+    res.status(400);
+    throw new Error("blogId is required in request body");
+  }
+  validateMongodbId(blogId);
+  const loginUserId = req.user._id;
+  const blog = await Blog.findById(blogId);
+  if (!blog) {
+    res.status(404);
+    throw new Error("Blog not found");
+  }
 
-module.exports = { createBlog, updateBlog, getBlog, getAllBlogs, likeBlog};
+  const alreadyLiked = blog.likes.find(
+    (id) => id.toString() === loginUserId.toString()
+  );
+
+  const alreadyDisliked = blog.dislikes.find(
+    (id) => id.toString() === loginUserId.toString()
+  );
+
+  // remove like → add dislike
+  if (alreadyLiked) {
+    const updatedBlog = await Blog.findByIdAndUpdate(
+      blogId,
+      {
+        $pull: { likes: loginUserId },
+        $push: { dislikes: loginUserId },
+        isLiked: false,
+        isDisliked: true,
+      },
+      { new: true }
+    );
+    return res.json(updatedBlog);
+  }
+
+  // undislike
+  if (alreadyDisliked) {
+    const updatedBlog = await Blog.findByIdAndUpdate(
+      blogId,
+      {
+        $pull: { dislikes: loginUserId },
+        isDisliked: false,
+      },
+      { new: true }
+    );
+    return res.json(updatedBlog);
+  }
+
+  // dislike
+  const updatedBlog = await Blog.findByIdAndUpdate(
+    blogId,
+    {
+      $push: { dislikes: loginUserId },
+      isDisliked: true,
+    },
+    { new: true }
+  );
+  res.json(updatedBlog);
+});
+
+
+module.exports = { createBlog, updateBlog, getBlog, getAllBlogs, likeBlog, dislikeBlog};
