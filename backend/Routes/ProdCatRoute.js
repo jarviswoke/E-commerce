@@ -16,5 +16,4 @@ router.delete("/:id", authMiddleware, isAdmin, deleteCategory);
 router.get("/:id", authMiddleware, getCategory);        
 router.get("/", authMiddleware, isAdmin, getAllCategories); 
 
-
 module.exports = router; 
