@@ -1,4 +1,5 @@
 const Product = require("../Models/productModel");
+const User = require("../Models/userModel");
 const asyncHandler = require("express-async-handler");
 const slugify = require("slugify");
 
@@ -146,4 +147,45 @@ const deleteProduct = asyncHandler(async (req, res) => {
 });
 
 
-module.exports = { createProduct, getProduct, getAllProducts, updateProduct, deleteProduct };
+// ADD / REMOVE PRODUCT FROM WISHLIST
+const addToWishlist = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  const { prodId } = req.body;
+  const user = await User.findById(_id);
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+  const alreadyAdded = user.wishlist.includes(prodId);
+  if (alreadyAdded) {
+    await User.findByIdAndUpdate(
+      _id,
+      { $pull: { wishlist: prodId } },
+      { new: true }
+    );
+  } else {
+    await User.findByIdAndUpdate(
+      _id,
+      { $push: { wishlist: prodId } },
+      { new: true }
+    );
+  }
+
+  // 🔥 POPULATE HERE
+  const updatedUser = await User.findById(_id)
+    .populate("wishlist");
+
+  res.status(200).json({
+    success: true,
+    user: {
+      firstname: updatedUser.firstname,
+      lastname: updatedUser.lastname,
+      email: updatedUser.email,
+      wishlist: updatedUser.wishlist,
+    },
+  });
+});
+
+
+
+module.exports = { createProduct, getProduct, getAllProducts, updateProduct, deleteProduct, addToWishlist };
