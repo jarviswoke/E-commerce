@@ -3,12 +3,15 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const dbConnect = require("./Models/dbConnect");
+
 const authRouter = require("./Routes/authRoute");
 const productRouter = require("./Routes/productRoute");
 const blogRouter = require("./Routes/blogRoute");
 const PcategoryRouter = require("./Routes/ProdCatRoute");
 const BlogcategoryRouter = require("./Routes/BlogCatRoute");
 const brandRouter = require("./Routes/brandRoute");
+const couponRouter = require("./Routes/couponRoute");
+
 const bodyParser = require("body-parser");
 const { notFound, errorHandler } = require("./Middlewares/errorHandler");
 const cookieParser = require("cookie-parser");
@@ -31,6 +34,7 @@ app.use("/api/blog", blogRouter);
 app.use("/api/pcategory", PcategoryRouter);
 app.use("/api/bcategory", BlogcategoryRouter);
 app.use("/api/brand", brandRouter);
+app.use("/api/coupon", couponRouter);
 
 app.use(notFound);
 app.use(errorHandler);
