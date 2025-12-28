@@ -171,7 +171,7 @@ const addToWishlist = asyncHandler(async (req, res) => {
     );
   }
 
-  // 🔥 POPULATE HERE
+  // POPULATE HERE
   const updatedUser = await User.findById(_id)
     .populate("wishlist");
 
@@ -186,6 +186,67 @@ const addToWishlist = asyncHandler(async (req, res) => {
   });
 });
 
+const rating = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  const { star, comment, prodId } = req.body;
+  try {
+    // Find product
+    const product = await Product.findById(prodId);
+    if (!product) {
+      res.status(404);
+      throw new Error("Product not found");
+    }
+    // Check if already rated
+    const alreadyRated = product.ratings.find(
+      (r) => r.postedby.toString() === _id.toString()
+    );
+    // Update or add rating
+    if (alreadyRated) {
+      await Product.findOneAndUpdate(
+        { _id: prodId, "ratings.postedby": _id },
+        {
+          $set: {
+            "ratings.$.star": star,
+            "ratings.$.comment": comment,
+          },
+        }
+      );
+    } else {
+      await Product.findByIdAndUpdate(prodId, {
+        $push: {
+          ratings: {
+            star,
+            comment,
+            postedby: _id,
+          },
+        },
+      });
+    }
+    // Recalculate total rating
+    const updatedProduct = await Product.findById(prodId);
+    const totalRatings = updatedProduct.ratings.length;
+    const ratingSum = updatedProduct.ratings.reduce(
+      (sum, item) => sum + item.star,
+      0
+    );
+
+    const actualRating =
+      totalRatings === 0 ? 0 : Math.round(ratingSum / totalRatings);
+
+    // Save totalrating
+    const finalProduct = await Product.findByIdAndUpdate(
+      prodId,
+      { totalrating: actualRating },
+      { new: true }
+    );
+
+    res.json(finalProduct);
+  } catch (error) {
+    res.status(500);
+    throw new Error(error);
+  }
+});
 
 
-module.exports = { createProduct, getProduct, getAllProducts, updateProduct, deleteProduct, addToWishlist };
+
+module.exports = { createProduct, getProduct, getAllProducts, updateProduct, deleteProduct, addToWishlist, rating };

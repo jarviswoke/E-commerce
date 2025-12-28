@@ -7,22 +7,28 @@ const { generateRefreshToken } = require("../Config/refreshToken");
 const sendEmail = require("./emailCtrl");
 const crypto = require("crypto");
 
-// create user
-const createUser = asyncHandler(async (req, res) => {
-    const { email } = req.body;
-    // Check if user already exists
-    const findUser = await User.findOne({ email });
-    if (findUser) {
-        res.status(409);
-        throw new Error("This hero already exists in the Avengers database..");
-    }
-    // Create new user
-    const newUser = await User.create(req.body);
-    res.status(201).json({
-        success: true,
-        message: "Welcome to the Avengers Initiative..",
-        data: newUser,
-    });
+ const createUser = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  // Check if user already exists
+  const findUser = await User.findOne({ email });
+  if (findUser) {
+    res.status(409);
+    throw new Error("This hero already exists in the Avengers database..");
+  }
+
+  // Create new user
+  const newUser = await User.create(req.body);
+
+  // Remove password from response (extra safety)
+  const userObj = newUser.toObject();
+  delete userObj.password;
+
+  res.status(201).json({
+    success: true,
+    message: "Welcome to the Avengers Initiative..",
+    data: userObj,
+  });
 });
 
 // login user

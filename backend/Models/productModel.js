@@ -54,12 +54,20 @@ const productSchema = new mongoose.Schema(
           min: 1,
           max: 5,
         },
+        comment: {
+          type: String,
+          trim: true,
+        },
         postedby: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
         },
       },
     ],
+    totalrating: {
+      type: String, 
+      default: 0,
+    },
   },
   {
     timestamps: true,
