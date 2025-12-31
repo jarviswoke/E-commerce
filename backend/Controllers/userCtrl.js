@@ -1,6 +1,11 @@
 const jwt = require("jsonwebtoken");
 const { generateToken } = require("../Config/jwtToken");
 const User = require("../Models/userModel");
+const Product = require("../Models/productModel");
+const Cart = require("../Models/cartModel");
+const Coupon = require("../Models/couponModel");
+const Order = require("../Models/couponModel");
+
 const asyncHandler = require("express-async-handler");
 const validateMongodbId = require("../utils/validateMongodbid");
 const { generateRefreshToken } = require("../Config/refreshToken");
@@ -400,6 +405,155 @@ const getWishlist = asyncHandler(async (req, res) => {
     });
 });
 
+// user cart
+const userCart = asyncHandler(async (req, res) => {
+  const { cart } = req.body;
+  const { _id } = req.user;
+  validateMongodbId(_id);
+  // Remove existing cart
+  await Cart.findOneAndDelete({ orderby: _id });
+  let products = [];
+  let cartTotal = 0;
+  for (let i = 0; i < cart.length; i++) {
+    const productFromDB = await Product.findById(cart[i]._id)
+      .select("price")
+      .exec();
+
+    if (!productFromDB) {
+      throw new Error("Product not found");
+    }
+    let object = {
+      product: cart[i]._id,
+      count: cart[i].count,
+      color: cart[i].color,
+      price: productFromDB.price,
+    };
+    cartTotal += productFromDB.price * cart[i].count;
+    products.push(object);
+  }
+  // Create new cart
+  const newCart = await Cart.create({
+    products,
+    cartTotal,
+    orderby: _id,
+  });
+  res.json(newCart);
+});
+
+// get user cart 
+const getUserCart = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  validateMongodbId(_id);
+  const cart = await Cart.findOne({ orderby: _id })
+    .populate("products.product")
+    .exec();
+  if (!cart) {
+    return res.json({
+      products: [],
+      cartTotal: 0,
+      totalAfterDiscount: 0,
+    });
+  }
+  res.json(cart);
+});
+
+// empty cart 
+const emptyCart = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  validateMongodbId(_id);
+  const cart = await Cart.findOneAndDelete({ orderby: _id });
+  if (!cart) {
+    return res.json({ message: "Cart already empty" });
+  }
+  res.json({ message: "Cart emptied successfully" });
+});
+
+// apply coupon
+const applyCoupon = asyncHandler(async (req, res) => {
+  const { coupon } = req.body;
+  const { _id } = req.user;
+  validateMongodbId(_id);
+  // Find coupon
+  const validCoupon = await Coupon.findOne({ 
+    name: coupon.toUpperCase(),
+    isActive: true,
+   });
+  if (!validCoupon) {
+    throw new Error("Invalid coupon");
+  }
+  // Check expiry
+  if (validCoupon.expiry < new Date()) {
+    throw new Error("Coupon expired");
+  }
+  // Find user's cart
+  const cart = await Cart.findOne({ orderby: _id });
+  if (!cart) {
+    throw new Error("Cart not found");
+  }
+  // Apply discount
+  const totalAfterDiscount = (
+    cart.cartTotal -
+    (cart.cartTotal * validCoupon.discount) / 100
+  ).toFixed(2);
+  cart.totalAfterDiscount = totalAfterDiscount;
+  cart.appliedCoupon = validCoupon._id;
+  await cart.save();
+  res.json({
+    cartTotal: cart.cartTotal,
+    discount: validCoupon.discount,
+    totalAfterDiscount,
+  });
+});
+
+// create order
+const createOrder = asyncHandler(async (req, res) => {
+  const { COD } = req.body;
+  const { _id } = req.user;
+  validateMongodbId(_id);
+  if (!COD) {
+    throw new Error("Create cash order failed");
+  }
+  // Get cart
+  const userCart = await Cart.findOne({ orderby: _id });
+  if (!userCart) {
+    throw new Error("Cart not found");
+  }
+  // Final amount logic
+  let finalAmount;
+  if (userCart.totalAfterDiscount) {
+    finalAmount = Number(userCart.totalAfterDiscount) * 100;
+  } else {
+    finalAmount = userCart.cartTotal * 100;
+  }
+  // Create order
+  const newOrder = await Order.create({
+    products: userCart.products,
+    paymentIntent: {
+      id: uniqid(),
+      method: "COD",
+      amount: finalAmount,
+      status: "Cash on Delivery",
+      created: Date.now(),
+      currency: "INR",
+    },
+    orderby: _id,
+    orderStatus: "Cash on Delivery",
+    });
+    if (userCart.appliedCoupon) {
+        await Coupon.findByIdAndUpdate(
+        userCart.appliedCoupon,
+        { isActive: false }
+    );
+}
+  // Clear cart
+  await Cart.findOneAndDelete({ orderby: _id });
+  res.json({
+    message: "Order placed successfully",
+    newOrder,
+  });
+});
+
+
 
 module.exports = { 
     createUser, 
@@ -418,4 +572,9 @@ module.exports = {
     forgotPasswordToken, 
     resetPassword,
     getWishlist,
+    userCart,
+    getUserCart,
+    emptyCart,
+    applyCoupon,
+    createOrder,
 };

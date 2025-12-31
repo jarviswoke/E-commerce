@@ -14,7 +14,19 @@ var couponSchema = new mongoose.Schema({
     discount:{
         type: Number,
         required: true,
+        min: 1,
+        max: 90,
     },
-});
+    appliedCoupon: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Coupon",
+    },
+     isActive: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  { timestamps: true }
+);
 
 module.exports = mongoose.model('Coupon', couponSchema);
