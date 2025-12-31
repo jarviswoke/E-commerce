@@ -7,23 +7,20 @@ const { generateRefreshToken } = require("../Config/refreshToken");
 const sendEmail = require("./emailCtrl");
 const crypto = require("crypto");
 
- const createUser = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-
+// create user
+const createUser = asyncHandler(async (req, res) => {
+const { email } = req.body;
   // Check if user already exists
   const findUser = await User.findOne({ email });
   if (findUser) {
     res.status(409);
     throw new Error("This hero already exists in the Avengers database..");
   }
-
   // Create new user
   const newUser = await User.create(req.body);
-
   // Remove password from response (extra safety)
   const userObj = newUser.toObject();
   delete userObj.password;
-
   res.status(201).json({
     success: true,
     message: "Welcome to the Avengers Initiative..",
@@ -66,6 +63,43 @@ const loginUserCtrl = asyncHandler(async (req, res) => {
         throw new Error('Access denied. Even Tony Stark needs the right credentials...');
     }
 });
+
+// login admin
+const loginAdminCtrl = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+    const findAdmin = await User.findOne({ email }).select("+password");
+    if (
+        findAdmin &&
+        await findAdmin.isPasswordMatched(password) &&
+        findAdmin.role === "admin"
+    ) {
+        const refreshToken = await generateRefreshToken(findAdmin._id);
+        await User.findByIdAndUpdate(
+            findAdmin._id,
+            { refreshToken },
+            { new: true }
+        );
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax",
+            maxAge: 3 * 24 * 60 * 60 * 1000,
+        });
+        res.status(200).json({
+            message: "Welcome back, Director of SHIELD",
+            _id: findAdmin._id,
+            firstname: findAdmin.firstname,
+            lastname: findAdmin.lastname,
+            email: findAdmin.email,
+            role: findAdmin.role,
+            token: generateToken(findAdmin._id),
+        });
+    } else {
+        res.status(403);
+        throw new Error("Not authorized as admin");
+    }
+});
+
 
 // handle refresh token 
 const handleRefreshToken = asyncHandler(async (req, res) => {
@@ -159,6 +193,31 @@ const updateUser = asyncHandler(async (req, res) => {
     });
 });
 
+
+// save user address
+const saveAddress = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    validateMongodbId(_id);
+    const updatedUser = await User.findByIdAndUpdate(
+        _id,
+        {
+            address: req.body.address,
+        },
+        {
+            new: true,
+        }
+    );
+    if (!updatedUser) {
+        res.status(404);
+        throw new Error("User not found");
+    }
+    res.status(200).json({
+        message: "Address saved successfully...",
+        user: updatedUser,
+    });
+});
+
+
 //Get all users
 const getallUser = asyncHandler(async (req, res) => {
     try {
@@ -168,6 +227,7 @@ const getallUser = asyncHandler(async (req, res) => {
         throw new Error(error);
     }
 });
+
 
 // Get a single user
 const getaUser = asyncHandler(async (req, res) => {
@@ -182,6 +242,7 @@ const getaUser = asyncHandler(async (req, res) => {
     }
     res.status(200).json(user);
 });
+
 
 // Delete a user
 const deleteUser = asyncHandler(async (req, res) => {
@@ -324,11 +385,28 @@ const resetPassword = asyncHandler(async (req, res) => {
     });
 });
 
+// get user wishlist
+const getWishlist = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    validateMongodbId(_id);
+    const user = await User.findById(_id).populate("wishlist");
+    if (!user) {
+        res.status(404);
+        throw new Error("User not found");
+    }
+    res.status(200).json({
+        message: "Wishlist fetched successfully...",
+        wishlist: user.wishlist,
+    });
+});
+
 
 module.exports = { 
     createUser, 
     loginUserCtrl,
+    loginAdminCtrl,
     updateUser,
+    saveAddress,
     getallUser, 
     getaUser, 
     deleteUser,
@@ -339,4 +417,5 @@ module.exports = {
     updatePassword,
     forgotPasswordToken, 
     resetPassword,
+    getWishlist,
 };

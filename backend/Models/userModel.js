@@ -54,7 +54,9 @@ const userSchema = new Schema(
             },
         }
     ],
-    address: [{ type: Schema.Types.ObjectId, ref: "Address" }],
+    address: {
+        type: String,
+    },
     wishlist: [{ type: Schema.Types.ObjectId, ref: "Product" }],
     refreshToken: {
         type: String,
