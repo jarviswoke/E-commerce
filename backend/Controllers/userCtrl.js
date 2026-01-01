@@ -571,6 +571,42 @@ const createOrder = asyncHandler(async (req, res) => {
   });
 });
 
+// get user orders
+const getOrders = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  validateMongodbId(_id);
+  const orders = await Order.find({ orderby: _id })
+    .populate("products.product")
+    .sort({ createdAt: -1 });
+  res.status(200).json({
+    success: true,
+    count: orders.length,
+    orders,
+  });
+});
+
+const updateOrderStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  const { id } = req.params;
+  validateMongodbId(id);
+  const updatedOrder = await Order.findByIdAndUpdate(
+    id,
+    {
+      orderStatus: status,
+      "paymentIntent.status": status,
+    },
+    { new: true }
+  );
+  if (!updatedOrder) {
+    res.status(404);
+    throw new Error("Order not found");
+  }
+  res.status(200).json({
+    success: true,
+    message: "Order status updated",
+    updatedOrder,
+  });
+});
 
 
 module.exports = { 
@@ -595,4 +631,6 @@ module.exports = {
     emptyCart,
     applyCoupon,
     createOrder,
+    getOrders,
+    updateOrderStatus,
 };

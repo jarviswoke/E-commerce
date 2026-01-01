@@ -3,7 +3,7 @@ const User = require("../Models/userModel");
 const asyncHandler = require("express-async-handler");
 const slugify = require("slugify");
 const validateMongoDbId = require("../utils/validateMongodbid");
-const cloudinaryUploadImg = require("../utils/cloudinary");
+const { cloudinaryUploadImg, cloudinaryDeleteImg } = require("../utils/cloudinary");
 const fs = require("fs");
 
 // create product route
@@ -250,34 +250,42 @@ const rating = asyncHandler(async (req, res) => {
   }
 });
 
-// upload images
 const uploadImages = asyncHandler(async (req, res) => {
   const { id } = req.params;
   validateMongoDbId(id);
-  try {
-    const uploader = (path) => cloudinaryUploadImg(path, "images");
-    const urls = [];
-    const files = req.files;
-    for (const file of files) {
-      const { path } = file;
-      const newPath = await uploader(path);
-      urls.push(newPath);
-      fs.unlinkSync(path); 
-    }
-    const findProduct = await Product.findByIdAndUpdate(
-      id,
-      {
-        $push: { images: { $each: urls } }, 
-      },
-      {
-        new: true,
-      }
-    );
-    res.json(findProduct);
-  } catch (error) {
-    throw new Error(error);
+  const uploader = (path) => cloudinaryUploadImg(path);
+  const urls = [];
+  for (const file of req.files) {
+    const uploaded = await uploader(file.path);
+    urls.push(uploaded);
+    fs.unlinkSync(file.path);
   }
+  const product = await Product.findByIdAndUpdate(
+    id,
+    {
+      $push: { images: { $each: urls } },
+    },
+    { new: true }
+  );
+  res.json(product);
 });
 
+const deleteProductImage = asyncHandler(async (req, res) => {
+  const { productId, public_id } = req.body;
+  validateMongoDbId(productId);
+  await cloudinaryDeleteImg(public_id);
+  const product = await Product.findByIdAndUpdate(
+    productId,
+    {
+      $pull: { images: { public_id } },
+    },
+    { new: true }
+  );
+  res.json({
+    success: true,
+    message: "Image deleted successfully",
+    product,
+  });
+});
 
-module.exports = { createProduct, getProduct, getAllProducts, updateProduct, deleteProduct, addToWishlist, rating, uploadImages };
+module.exports = { createProduct, getProduct, getAllProducts, updateProduct, deleteProduct, addToWishlist, rating, uploadImages, deleteProductImage };

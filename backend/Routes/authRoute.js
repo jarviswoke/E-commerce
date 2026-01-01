@@ -21,6 +21,8 @@ const {
     emptyCart,
     applyCoupon,
     createOrder,
+    getOrders,
+    updateOrderStatus,
 } = require("../Controllers/userCtrl");
 
 const { authMiddleware, isAdmin } = require('../Middlewares/authMiddleware');
@@ -45,9 +47,11 @@ router.get("/cart", authMiddleware, getUserCart);
 router.delete("/cart", authMiddleware, emptyCart); 
 router.post("/cart/apply-coupon", authMiddleware, applyCoupon);
 router.post("/cart/cash-order", authMiddleware, createOrder);
+router.get("/orders", authMiddleware, getOrders);
 
 // admin routes
 router.get("/all-users", authMiddleware, isAdmin, getallUser);
+router.put("/order/status/:id", authMiddleware, isAdmin, updateOrderStatus);
 router.put("/block-user/:id", authMiddleware, isAdmin, blockUser);
 router.put("/unblock-user/:id", authMiddleware, isAdmin, unblockUser);
 router.delete("/:id", authMiddleware, isAdmin, deleteUser);

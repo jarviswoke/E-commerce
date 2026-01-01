@@ -38,11 +38,25 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    images: [],
-    color: {
-      type: String,
-      required: true,
-    },
+    images: [
+      {
+        url: String,
+        public_id: String,
+      }
+    ],
+    color: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Color",
+      },
+    ],
+    tags: [
+      {
+        type: String,
+        lowercase: true,
+        trim: true,
+      },
+    ],
     ratings: [
       {
         star: {
@@ -61,13 +75,11 @@ const productSchema = new mongoose.Schema(
       },
     ],
     totalrating: {
-      type: String, 
+      type: Number,
       default: 0,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("Product", productSchema);
