@@ -17,10 +17,6 @@ var couponSchema = new mongoose.Schema({
         min: 1,
         max: 90,
     },
-    appliedCoupon: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Coupon",
-    },
      isActive: {
       type: Boolean,
       default: true,

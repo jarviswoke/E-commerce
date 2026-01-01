@@ -44,7 +44,7 @@ router.post("/cart", authMiddleware, userCart);
 router.get("/cart", authMiddleware, getUserCart);     
 router.delete("/cart", authMiddleware, emptyCart); 
 router.post("/cart/apply-coupon", authMiddleware, applyCoupon);
-
+router.post("/cart/cash-order", authMiddleware, createOrder);
 
 // admin routes
 router.get("/all-users", authMiddleware, isAdmin, getallUser);

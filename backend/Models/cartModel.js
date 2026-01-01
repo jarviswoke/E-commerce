@@ -33,6 +33,11 @@ const cartSchema = new mongoose.Schema(
       default: 0,
     },
 
+    appliedCoupon: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Coupon",
+    },
+
     orderby: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

@@ -11,6 +11,8 @@ const validateMongodbId = require("../utils/validateMongodbid");
 const { generateRefreshToken } = require("../Config/refreshToken");
 const sendEmail = require("./emailCtrl");
 const crypto = require("crypto");
+const uniqid = require('uniqid');
+
 
 // create user
 const createUser = asyncHandler(async (req, res) => {
@@ -505,27 +507,27 @@ const applyCoupon = asyncHandler(async (req, res) => {
   });
 });
 
-// create order
+// create order 
 const createOrder = asyncHandler(async (req, res) => {
   const { COD } = req.body;
   const { _id } = req.user;
   validateMongodbId(_id);
+  // 1. Check COD
   if (!COD) {
+    res.status(400);
     throw new Error("Create cash order failed");
   }
-  // Get cart
+  // 2. Find user cart
   const userCart = await Cart.findOne({ orderby: _id });
   if (!userCart) {
+    res.status(404);
     throw new Error("Cart not found");
   }
-  // Final amount logic
-  let finalAmount;
-  if (userCart.totalAfterDiscount) {
-    finalAmount = Number(userCart.totalAfterDiscount) * 100;
-  } else {
-    finalAmount = userCart.cartTotal * 100;
-  }
-  // Create order
+  // 3. Calculate final amount
+  let finalAmount = userCart.totalAfterDiscount
+    ? Number(userCart.totalAfterDiscount) * 100
+    : userCart.cartTotal * 100;
+  // 4. Create order
   const newOrder = await Order.create({
     products: userCart.products,
     paymentIntent: {
@@ -538,18 +540,34 @@ const createOrder = asyncHandler(async (req, res) => {
     },
     orderby: _id,
     orderStatus: "Cash on Delivery",
-    });
-    if (userCart.appliedCoupon) {
-        await Coupon.findByIdAndUpdate(
-        userCart.appliedCoupon,
-        { isActive: false }
+  });
+  // 5. Update product quantity & sold count
+  const bulkOperations = userCart.products.map((item) => ({
+    updateOne: {
+      filter: { _id: item.product._id },
+      update: {
+        $inc: {
+          quantity: -item.count,
+          sold: item.count,
+        },
+      },
+    },
+  }));
+  await Product.bulkWrite(bulkOperations);
+  // 6. Deactivate coupon (if applied)
+  if (userCart.appliedCoupon) {
+    await Coupon.findByIdAndUpdate(
+      userCart.appliedCoupon,
+      { isActive: false }
     );
-}
-  // Clear cart
+  }
+  // 7. Delete cart after order
   await Cart.findOneAndDelete({ orderby: _id });
-  res.json({
+  // 8. Response
+  res.status(201).json({
+    success: true,
     message: "Order placed successfully",
-    newOrder,
+    order: newOrder,
   });
 });
 
