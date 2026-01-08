@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { BsSearch } from "react-icons/bs";
 
 const Header = () => {
@@ -81,11 +81,67 @@ const Header = () => {
 
                 <Link to="/cart" className="d-flex align-items-center gap-10 text-white">
                   <img src="images/cart.svg" alt="cart" />
-                  <div className="d-flex flex-column">
+                  <div className="d-flex flex-column gap-10">
                     <span className="badge bg-white text-dark">0</span>
                     <p className="mb-0">$ 500</p>
                   </div>
                 </Link>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* HEADER BOTTOM */}
+      <header className="header-bottom py-2">
+        <div className="container-xxl">
+          <div className="row">
+            <div className="col-12">
+              <div className="menu-bottom d-flex align-items-center gap-30">
+
+                {/* DROPDOWN */}
+                <div className="dropdown">
+                  <button
+                    className="btn btn-secondary dropdown-toggle bg-transparent border-0 gap-15 d-flex align-items-center"
+                    type="button"
+                    id="dropdownMenuButton1"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    <img src="images/menu.svg" alt="menu"/>
+                    <span>Show Categories</span>
+                  </button>
+
+                  <ul
+                    className="dropdown-menu"
+                    aria-labelledby="dropdownMenuButton1"
+                  >
+                    <li>
+                      <Link className="dropdown-item text-white" to="/">
+                        Electronics
+                      </Link>
+                    </li>
+                    <li>
+                      <Link className="dropdown-item text-white" to="/">
+                        Fashion
+                      </Link>
+                    </li>
+                    <li>
+                      <Link className="dropdown-item text-white" to="/">
+                        Home & Kitchen
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* MENU LINKS */}
+                <div className="menu-links">
+                  <NavLink to="/">Home</NavLink>
+                  <NavLink to="/product">Our Store</NavLink>
+                  <NavLink to="/blogs">Blogs</NavLink>
+                  <NavLink to="/contact">Contact</NavLink>
+                </div>
 
               </div>
             </div>
