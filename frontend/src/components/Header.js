@@ -1,4 +1,3 @@
-import React from "react";
 import { Link, NavLink } from "react-router-dom";
 import { BsSearch } from "react-icons/bs";
 
@@ -47,9 +46,11 @@ const Header = () => {
                   type="text"
                   className="form-control py-2"
                   placeholder="Search Product Here..."
+                  aria-label="Search Product Here..."
+                  aria-describedby="basic-addon2"
                 />
-                <span className="input-group-text p-3">
-                  <BsSearch />
+                <span className="input-group-text p-3" id="basic-addon2">
+                  <BsSearch className="fs-6" />
                 </span>
               </div>
             </div>
@@ -94,7 +95,7 @@ const Header = () => {
       </header>
 
       {/* HEADER BOTTOM */}
-      <header className="header-bottom py-2">
+      <header className="header-bottom py-3">
         <div className="container-xxl">
           <div className="row">
             <div className="col-12">
