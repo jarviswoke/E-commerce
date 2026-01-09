@@ -16,7 +16,7 @@ const Header = () => {
             <div className="col-6 text-end">
               <p className="text-white mb-0">
                 Helpline:{" "}
-                <a href="tel:+919763844464" className="text-white">
+                <a href="tel:+919763844464" className="text-white text-decoration-none">
                   +91 9763844464
                 </a>
               </p>
@@ -138,12 +138,11 @@ const Header = () => {
 
                 {/* MENU LINKS */}
                 <div className="menu-links">
-                  <NavLink to="/">Home</NavLink>
-                  <NavLink to="/product">Our Store</NavLink>
-                  <NavLink to="/blogs">Blogs</NavLink>
-                  <NavLink to="/contact">Contact</NavLink>
+                  <NavLink to="/" className="text-decoration-none">Home</NavLink>
+                  <NavLink to="/product" className="text-decoration-none">Our Store</NavLink>
+                  <NavLink to="/blogs" className="text-decoration-none">Blogs</NavLink>
+                  <NavLink to="/contact" className="text-decoration-none">Contact</NavLink>
                 </div>
-
               </div>
             </div>
           </div>
