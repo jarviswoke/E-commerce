@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Marquee from "react-fast-marquee";
 import BlogCard from '../components/BlogCard';
 import ProductCard from '../components/ProductCard';
+import SpecialProduct from '../components/SpecialProduct';
 
 const Home = () => {
   return (
@@ -204,12 +205,72 @@ const Home = () => {
           </div>
         </div>
       </section>
+      <section className="famous-wrapper py-5 home-wrapper-2">
+        <div className="container-xxl">
+          <div className="row g-4">
+            <div className="col-3">
+              <div className="famous-card">
+                <div className="famous-img-wrapper">
+                  <img src="images/famous-2.jpg" alt="Smart Watch" />
+                </div>
+                <div className="famous-content">
+                  <h5>BIG SCREEN</h5>
+                  <h6>Smart Watch Series 7</h6>
+                  <p>From $399 or $16.62/mo.</p>
+                </div>
+              </div>
+            </div>
+            <div className="col-3">
+              <div className="famous-card">
+                <div className="famous-img-wrapper">
+                  <img src="images/famous-1.jpg" alt="Studio Display" />
+                </div>
+                <div className="famous-content">
+                  <h5>STUDIO DISPLAY</h5>
+                  <h6>600 nits of brightness</h6>
+                  <p>27-inch 5K Retina display</p>
+                </div>
+              </div>
+            </div>
+            <div className="col-3">
+              <div className="famous-card">
+                <div className="famous-img-wrapper">
+                  <img src="images/famous-3.jpg" alt="iPhone 13 Pro" />
+                </div>
+                <div className="famous-content">
+                  <h5>SMARTPHONES</h5>
+                  <h6>iPhone 13 Pro</h6>
+                  <p>Now in Green. From $999</p>
+                </div>
+              </div>
+            </div>
+            <div className="col-3">
+              <div className="famous-card">
+                <div className="famous-img-wrapper">
+                  <img src="images/famous-4.jpg" alt="Laptop" />
+                </div>
+                <div className="famous-content">
+                  <h5>HOME SPEAKERS</h5>
+                  <h6>Room-filling sound</h6>
+                  <p>From $699</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       <section className="special--wrapper py-5 home-wrapper">
         <div className="container-xxl">
           <div className="row">
             <div className="col-12">
               <h3 className="section-heading">Special Products</h3>
             </div>
+          </div>
+          <div className="row">
+            <SpecialProduct/>
+            <SpecialProduct/>
+            <SpecialProduct/>
+            <SpecialProduct/>
           </div>
         </div>
       </section>
