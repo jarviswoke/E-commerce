@@ -139,7 +139,7 @@ const Header = () => {
                 {/* MENU LINKS */}
                 <div className="menu-links">
                   <NavLink to="/" className="text-decoration-none">Home</NavLink>
-                  <NavLink to="/product" className="text-decoration-none">Our Store</NavLink>
+                  <NavLink to="/store" className="text-decoration-none">Our Store</NavLink>
                   <NavLink to="/blogs" className="text-decoration-none">Blogs</NavLink>
                   <NavLink to="/contact" className="text-decoration-none">Contact</NavLink>
                 </div>

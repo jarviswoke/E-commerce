@@ -293,9 +293,6 @@ const Home = () => {
                     <img src="images/brand-04.png" alt="brand"/>
                   </div>
                   <div className="mx-4 w-25">
-                    <img src="images/brand-04.png" alt="brand"/>
-                  </div>
-                  <div className="mx-4 w-25">
                     <img src="images/brand-05.png" alt="brand"/>
                   </div>
                   <div className="mx-4 w-25">
