@@ -505,7 +505,7 @@ footer .input-group-text {
 .filter-card {
   background-color: white;
   border-radius: 10px;
-  padding: 10px 15px;
+  padding: 10px 15px 25px;
 }
 .filter-title {
   font-size: 16px;
@@ -514,19 +514,94 @@ footer .input-group-text {
   color: var(--color-1c1c1b);
   margin-bottom: 20px;
 }
-.filter-card ul{
+.filter-card ul, 
+.filter-card .form-check-label{
   list-style-type: none;
   font-size: 13px;
   line-height: 36px;
   color: var(--color-777777);
   cursor: pointer;
 }
+.filter-card .form-check-input:focus {
+  box-shadow: none;
+  border-color: rgba(0, 0, 0, 0.25);
+}
+.filter-card .form-check-input:checked {
+  background-color: var(--color-febd69);
+  border-color: var(--color-febd69);
+}
 .sub-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--color-1c1c1b);
   margin-bottom: 15px;
+  margin-top: 20px;
 }
+.colors {
+  list-style-type: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.colors li {
+  width: 20px;
+  height: 20px;
+  background-color: red;
+  border-radius: 50%;
+}
+.random-product {
+  padding: 10px 0;
+}
+.random-products h5 {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.random-products:first-child {
+  border-bottom: 1px solid var(--color-ededed);
+}
+.random-product-image {
+  width: 30%;
+  flex-shrink: 0;
+}
+.random-product-image img {
+  max-width: 100%;
+  height: auto;
+}
+.random-product-details {
+  width: 70%;
+}
+.random-product-details h5 {
+  font-size: 14px;
+  line-height: 18px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.random-product-details b {
+  font-size: 14px;
+} 
+.filter-sort-grid {
+  padding: 8px 12px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.grid {
+  background-color: #f2f2f2;
+  padding: 8px 12px;
+  border-radius: 30px;
+}
+.grid img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  cursor: pointer;
+}
+.totalproducts {
+  font-size: 14px;
+  color: #555;
+  white-space: nowrap;
+}
+
 /* ============== END ============== */
 /* ========= Home wrapper ========= */
 /* ============== END ============== */
