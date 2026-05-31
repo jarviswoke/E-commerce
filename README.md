@@ -227,18 +227,6 @@ http://localhost:3000
 
 ---
 
-## 📸 Screenshots
-
-Add screenshots of:
-
-* Home Page
-* Product Page
-* Cart Page
-* Login/Register Page
-* Admin Dashboard (if available)
-
----
-
 ## 🎯 Future Improvements
 
 * Razorpay Payment Gateway
